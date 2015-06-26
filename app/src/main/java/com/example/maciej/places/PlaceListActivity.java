@@ -14,11 +14,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import org.json.JSONException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.util.List;
 
 
 public class PlaceListActivity extends ActionBarActivity {
@@ -26,8 +29,7 @@ public class PlaceListActivity extends ActionBarActivity {
     private Location userLocation;
     private Double userLatitude;
     private Double userLongitude;
-    private final String API_KEY = "AIzaSyCeC2TE5yhBdOGz5dnu4cIg1Q-Wi-gT-30";
-    private String PLACES_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+    private String URL;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +39,9 @@ public class PlaceListActivity extends ActionBarActivity {
         getLocation();
         Toast.makeText(this, "" + userLatitude + ", " + userLongitude, Toast.LENGTH_SHORT).show();
 
-        PLACES_URL += "?location=" + userLatitude + "," + userLongitude + "&radius=" + 5000 + "&key=" + API_KEY;
-        Log.i("debug", PLACES_URL);
+        URL = Constants.PLACES_URL + "?location=" + userLatitude + "," + userLongitude + "&radius=" + 5000
+                + "&key=" + Constants.API_KEY;
+        Log.i("debug", URL);
 
         if (isOnline()) {
             (new AsyncPlacesDownload()).execute();
@@ -90,61 +93,41 @@ public class PlaceListActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private String getFromUrl() throws IOException {
-        InputStream is = null;
-
-        try {
-            java.net.URL url = new java.net.URL(PLACES_URL);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(10000 /* milliseconds */);
-            conn.setConnectTimeout(15000 /* milliseconds */);
-            conn.setRequestMethod("GET");
-            conn.setDoInput(true);
-            conn.connect();
-            is = conn.getInputStream();
-
-            return readStream(is);
-        }
-        finally {
-            if (is != null) {
-                is.close();
-            }
-        }
-    }
-
-    public String readStream(InputStream stream) throws IOException {
-        BufferedReader r = new BufferedReader(new InputStreamReader(stream));
-        StringBuilder total = new StringBuilder();
-        String line;
-        while ((line = r.readLine()) != null) {
-            total.append(line);
-        }
-        return total.toString();
-    }
 
 
-    private class AsyncPlacesDownload extends AsyncTask<String, Void, String> {
+
+    private class AsyncPlacesDownload extends AsyncTask<String, Void, List<Place>> {
+
+        private NetworkProvider networkProvider;
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(List<Place> result) {
             super.onPostExecute(result);
-            Toast.makeText(PlaceListActivity.this, result, Toast.LENGTH_LONG).show();
+            /*
+            adapter.setTags(result);
+            adapter.notifyDataSetChanged();
+            ViewAnimator animator = (ViewAnimator) findViewById(R.id.animator);
+            animator.setDisplayedChild(1);
+            */
 
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            networkProvider = new NetworkProvider(URL, userLocation);
         }
 
         @Override
-        protected String doInBackground(String... params) {
+        protected List<Place> doInBackground(String... params) {
             try {
-                return getFromUrl();
+                networkProvider.getPlaces();
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-            return null;
+            return networkProvider.getPlaceList();
         }
     }
 }
