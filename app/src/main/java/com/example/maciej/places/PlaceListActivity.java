@@ -6,12 +6,17 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -24,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.util.List;
 
 
+@SuppressWarnings("ALL")
 public class PlaceListActivity extends ActionBarActivity {
 
     private Location userLocation;
@@ -31,17 +37,26 @@ public class PlaceListActivity extends ActionBarActivity {
     private Double userLongitude;
     private String URL;
 
+    private RecyclerView mRecyclerView;
+    private PlaceAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_place_list);
 
-        getLocation();
-        Toast.makeText(this, "" + userLatitude + ", " + userLongitude, Toast.LENGTH_SHORT).show();
+        mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
-        URL = Constants.PLACES_URL + "?location=" + userLatitude + "," + userLongitude + "&radius=" + 5000
+        mAdapter = new PlaceAdapter(this);
+        mRecyclerView.setAdapter(mAdapter);
+
+        getLocation();
+
+        URL = Constants.PLACES_URL + "?location=" + userLatitude + "," + userLongitude + "&radius=" + 1000
                 + "&key=" + Constants.API_KEY;
-        Log.i("debug", URL);
 
         if (isOnline()) {
             (new AsyncPlacesDownload()).execute();
@@ -103,12 +118,9 @@ public class PlaceListActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(List<Place> result) {
             super.onPostExecute(result);
-            /*
-            adapter.setTags(result);
-            adapter.notifyDataSetChanged();
-            ViewAnimator animator = (ViewAnimator) findViewById(R.id.animator);
-            animator.setDisplayedChild(1);
-            */
+            mAdapter.setPlaces(result);
+            mAdapter.notifyDataSetChanged();
+
 
         }
 

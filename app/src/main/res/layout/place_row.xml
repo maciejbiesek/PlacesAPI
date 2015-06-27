@@ -1,0 +1,50 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="100dp">
+
+    <ImageView
+        android:id="@+id/place_photo"
+        android:layout_marginTop="3dp"
+        android:layout_alignParentLeft="true"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerCrop"/>
+
+    <TextView
+        android:id="@+id/place_name"
+        style="@style/PrimaryText"
+        android:layout_toRightOf="@+id/place_photo"
+        android:layout_width="fill_parent"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:layout_height="50dp"/>
+
+    <TextView
+        android:id="@+id/place_address"
+        style="@style/SecondaryText"
+        android:paddingLeft="8dp"
+        android:layout_toRightOf="@+id/place_photo"
+        android:layout_below="@+id/place_name"
+        android:layout_width="fill_parent"
+        android:gravity="center_vertical"
+        android:layout_height="20dp"/>
+
+    <TextView
+        android:id="@+id/place_distance"
+        style="@style/SecondaryText"
+        android:paddingLeft="8dp"
+        android:layout_toRightOf="@+id/place_photo"
+        android:layout_below="@+id/place_address"
+        android:layout_width="fill_parent"
+        android:gravity="center_vertical"
+        android:layout_height="20dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_below="@+id/place_distance"
+        android:layout_height="0.2px"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:background="@color/divider"/>
+
+</RelativeLayout>

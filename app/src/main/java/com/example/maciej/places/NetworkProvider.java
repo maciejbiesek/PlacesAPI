@@ -14,6 +14,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class NetworkProvider {
@@ -35,26 +37,46 @@ public class NetworkProvider {
         for (int i = 0; i < jsonResults.length(); i++) {
             JSONObject jsonPlace = jsonResults.getJSONObject(i);
             String name = jsonPlace.getString("name");
-            String address = jsonPlace.getString("vicinity");
             double lat = jsonPlace.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
             double lng = jsonPlace.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
-            String photoReference = jsonPlace.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
-            Place place;
-            if (photoReference != null) {
 
+
+            String address;
+            try {
+                address = jsonPlace.getString("vicinity");
+            } catch (JSONException e){
+                address = null;
+            }
+
+            String photoReference;
+            try {
+                photoReference = jsonPlace.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
+            } catch (JSONException e){
+                photoReference = null;
+            }
+
+            Place place = null;
+            if (address != null && photoReference != null) {
                 place = new Place(photoReference, name, lat, lng, address);
             }
-            else {
+            else if (address != null) {
                 place = new Place(name, lat, lng, address);
             }
 
-            Location placeLocation = new Location("placeLocation");
-            placeLocation.setLatitude(place.getLat());
-            placeLocation.setLongitude(place.getLng());
+            if (place != null) {
+                Location placeLocation = new Location("placeLocation");
+                placeLocation.setLatitude(place.getLat());
+                placeLocation.setLongitude(place.getLng());
 
-            place.setDistance(location.distanceTo(placeLocation));
-            placeList.add(place);
+                place.setDistance(location.distanceTo(placeLocation) / 1000); // change metres to km
+                placeList.add(place);
+            }
         }
+        Collections.sort(placeList, new Comparator<Place>() {
+            public int compare(Place p1, Place p2) {
+                return p1.getDistance().compareTo(p2.getDistance());
+            }
+        });
     }
 
     private String downloadFromUrl() throws IOException {

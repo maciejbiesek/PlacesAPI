@@ -1,7 +1,9 @@
 package com.example.maciej.places;
 
 
-public class Place {
+import java.io.Serializable;
+
+public class Place implements Serializable {
     private String photoUrl;
     private String name;
     private double lat;
@@ -31,7 +33,7 @@ public class Place {
     public double getLat() { return lat; }
     public double getLng() { return lng; }
     public String getAddress() { return address; }
-    public double getDistance() { return distance; }
+    public Double getDistance() { return distance; }
 
     public void setDistance(double distance) { this.distance = distance; }
 }
