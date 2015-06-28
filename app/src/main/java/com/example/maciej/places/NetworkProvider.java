@@ -1,6 +1,9 @@
 package com.example.maciej.places;
 
 
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.util.Log;
 
@@ -17,16 +20,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 public class NetworkProvider {
 
     private String URL;
     private Location location;
+    private Context context;
     private List<Place> placeList;
 
-    public NetworkProvider(String URL, Location location) {
+    public NetworkProvider(String URL, Context context, Location location) {
         this.URL = URL;
         this.location = location;
+        this.context = context;
         this.placeList = new ArrayList<>();
     }
 
@@ -40,13 +46,7 @@ public class NetworkProvider {
             double lat = jsonPlace.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
             double lng = jsonPlace.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
 
-
-            String address;
-            try {
-                address = jsonPlace.getString("vicinity");
-            } catch (JSONException e){
-                address = null;
-            }
+            String address = getAddress(lat, lng);
 
             String photoReference;
             try {
@@ -56,10 +56,10 @@ public class NetworkProvider {
             }
 
             Place place = null;
-            if (address != null && photoReference != null) {
+            if (photoReference != null) {
                 place = new Place(photoReference, name, lat, lng, address);
             }
-            else if (address != null) {
+            else {
                 place = new Place(name, lat, lng, address);
             }
 
@@ -77,6 +77,23 @@ public class NetworkProvider {
                 return p1.getDistance().compareTo(p2.getDistance());
             }
         });
+    }
+
+    private String getAddress(double latitude, double longitude) {
+        Geocoder geocoder;
+        List<Address> addresses;
+        geocoder = new Geocoder(context, Locale.getDefault());
+
+        addresses = null;
+        try {
+            addresses = geocoder.getFromLocation(latitude, longitude, 1);
+        } catch (IOException e) {
+            return "Nie udało się określić adresu na podstawie koordynatów";
+        }
+
+        String address = addresses.get(0).getAddressLine(0);
+        String city = addresses.get(0).getLocality();
+        return address + ", " + city;
     }
 
     private String downloadFromUrl() throws IOException {

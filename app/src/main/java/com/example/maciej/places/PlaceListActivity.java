@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
+import android.widget.ViewAnimator;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -157,6 +158,10 @@ public class PlaceListActivity extends ActionBarActivity implements
         }
     }
 
+    public Context getContext() {
+        return this;
+    }
+
 
     private class AsyncPlacesDownload extends AsyncTask<String, Void, List<Place>> {
 
@@ -168,12 +173,15 @@ public class PlaceListActivity extends ActionBarActivity implements
 
             mAdapter = new PlaceAdapter(PlaceListActivity.this, result);
             mRecyclerView.setAdapter(mAdapter);
+
+            ViewAnimator viewAnimator = (ViewAnimator) findViewById(R.id.animator);
+            viewAnimator.setDisplayedChild(1);
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            networkProvider = new NetworkProvider(URL, userLocation);
+            networkProvider = new NetworkProvider(URL, PlaceListActivity.this, userLocation);
         }
 
         @Override

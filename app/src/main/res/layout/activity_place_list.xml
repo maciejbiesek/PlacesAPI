@@ -1,13 +1,24 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+<ViewAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/animator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/my_recycler_view"
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"/>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:divider="#4a4848"
-        android:dividerHeight="0.2dp"
-        android:scrollbars="vertical" />
+        android:layout_height="fill_parent">
 
-</RelativeLayout> 
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/my_recycler_view"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:divider="#4a4848"
+            android:dividerHeight="0.2dp"
+            android:scrollbars="vertical" />
+
+    </RelativeLayout>
+</ViewAnimator>
