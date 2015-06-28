@@ -1,6 +1,8 @@
 package com.example.maciej.places;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -19,6 +21,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
 import org.json.JSONException;
 
 import java.io.BufferedReader;
@@ -30,15 +36,19 @@ import java.util.List;
 
 
 @SuppressWarnings("ALL")
-public class PlaceListActivity extends ActionBarActivity {
+public class PlaceListActivity extends ActionBarActivity implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     private Location userLocation;
     private Double userLatitude;
     private Double userLongitude;
     private String URL;
+    private GoogleApiClient mGoogleApiClient;
+    private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-    private RecyclerView mRecyclerView;
-    private PlaceAdapter mAdapter;
+    private static RecyclerView mRecyclerView;
+    private static PlaceAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
 
     @Override
@@ -47,37 +57,22 @@ public class PlaceListActivity extends ActionBarActivity {
         setContentView(R.layout.activity_place_list);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
-        mAdapter = new PlaceAdapter(this);
-        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         getLocation();
+    }
 
-        URL = Constants.PLACES_URL + "?location=" + userLatitude + "," + userLongitude + "&radius=" + 1000
-                + "&key=" + Constants.API_KEY;
-
-        if (isOnline()) {
-            (new AsyncPlacesDownload()).execute();
-        }
-        else {
-            Toast.makeText(this, "Brak dostępu do internetu", Toast.LENGTH_SHORT).show();
-        }
+    public void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
     }
 
     private void getLocation() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        Criteria criteria = new Criteria();
-        String provider = locationManager.getBestProvider(criteria, false);
-        userLocation = locationManager.getLastKnownLocation(provider);
-
-        if(userLocation != null)
-        {
-            userLongitude = userLocation.getLongitude();
-            userLatitude = userLocation.getLatitude();
-        }
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
     }
 
     public boolean isOnline() {
@@ -108,7 +103,59 @@ public class PlaceListActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onStop() {
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+        super.onStop();
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mGoogleApiClient.isConnected()) {
+            userLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            userLatitude = userLocation.getLatitude();
+            userLongitude = userLocation.getLongitude();
+        }
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.i("debug", "Location services connected.");
+        userLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        userLatitude = userLocation.getLatitude();
+        userLongitude = userLocation.getLongitude();
+
+        URL = Constants.PLACES_URL + "?location=" + userLatitude + "," + userLongitude + "&radius=" + 5000
+                + "&key=" + Constants.API_KEY;
+
+        if (isOnline()) {
+            (new AsyncPlacesDownload()).execute();
+        }
+        else {
+            Toast.makeText(this, "Brak dostępu do internetu", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i("debug", "Location services suspended. Please reconnect.");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        if (connectionResult.hasResolution()) {
+            try {
+                connectionResult.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            } catch (IntentSender.SendIntentException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.i("debug", "Location services connection failed with code " + connectionResult.getErrorCode());
+        }
+    }
 
 
     private class AsyncPlacesDownload extends AsyncTask<String, Void, List<Place>> {
@@ -118,10 +165,9 @@ public class PlaceListActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(List<Place> result) {
             super.onPostExecute(result);
-            mAdapter.setPlaces(result);
-            mAdapter.notifyDataSetChanged();
 
-
+            mAdapter = new PlaceAdapter(PlaceListActivity.this, result);
+            mRecyclerView.setAdapter(mAdapter);
         }
 
         @Override
@@ -142,4 +188,5 @@ public class PlaceListActivity extends ActionBarActivity {
             return networkProvider.getPlaceList();
         }
     }
+
 }

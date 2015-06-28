@@ -15,13 +15,15 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import static com.example.maciej.places.PlaceListActivity.*;
+
 public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> {
     private List<Place> places;
     private Context context;
 
-    public PlaceAdapter(Context context) {
+    public PlaceAdapter(Context context, List<Place> places) {
         this.context = context;
-        this.places = new ArrayList<Place>();
+        this.places = places;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -68,5 +70,4 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
         places.clear();
         places.addAll(placeList);
     }
-
 }
